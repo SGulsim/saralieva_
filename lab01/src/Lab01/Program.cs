@@ -10,6 +10,7 @@ var person = new Person
     Password = "Mandarin_2007"
 };
 
+
 var serializer = new PersonSerializer();
 var baseDirectory = AppContext.BaseDirectory;
 
