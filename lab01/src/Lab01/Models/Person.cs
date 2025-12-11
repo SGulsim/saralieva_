@@ -9,18 +9,21 @@ public class Person
     private string _email = string.Empty;
     private int _age;
 
+    [JsonPropertyName("firstName")]
     public string FirstName
     {
         get => _firstName;
         set => _firstName = ValidateRequired(value, nameof(FirstName));
     }
 
+    [JsonPropertyName("lastName")]
     public string LastName
     {
         get => _lastName;
         set => _lastName = ValidateRequired(value, nameof(LastName));
     }
 
+    [JsonPropertyName("age")]
     public int Age
     {
         get => _age;
@@ -29,6 +32,7 @@ public class Person
             : throw new ArgumentOutOfRangeException(nameof(Age), value, "возраст не может быть отрицательным, вы чего");
     }
 
+    [JsonPropertyName("email")]
     public string Email
     {
         get => _email;
@@ -52,8 +56,10 @@ public class Person
     // чтобы пароли не попадали в сериализованный json
     public string? Password { get; set; }
 
+    [JsonPropertyName("fullName")]
     public string FullName => $"{FirstName} {LastName}".Trim();
 
+    [JsonPropertyName("isAdult")]
     public bool IsAdult => Age >= 18;
 
     private static string ValidateRequired(string? value, string propertyName)
