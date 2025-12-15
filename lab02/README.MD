@@ -11,7 +11,7 @@
 - ОС: Windows 11 Home 23H2 (22631.2715)
 - Процессор: AMD RYZEN 5-5500U @ 2.30 GHz
 - ОЗУ: 8 GB
-- .NET SDK: 9.0.100
+- .NET SDK: 9.0
 - Компилятор: Roslyn (.NET 9)
 - Режим запуска: `Release`, 64-bit
 
