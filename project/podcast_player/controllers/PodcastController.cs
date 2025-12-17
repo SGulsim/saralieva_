@@ -1,36 +1,38 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Project.data;
 using Project.models;
+using Project.Services.Interfaces;
+using FluentValidation;
 
 namespace Project.controllers;
 
 [ApiController]
-[Route(template:"podcast")]
-public class PodcastControllers: ControllerBase
+[Route(template:"api/[controller]")]
+public class PodcastController: ControllerBase
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IPodcastService _podcastService;
+    private readonly IValidator<Podcast> _validator;
 
-    public PodcastControllers(ApplicationDbContext context)
+    public PodcastController(IPodcastService podcastService, IValidator<Podcast> validator)
     {
-        _context = context;
+        _podcastService = podcastService;
+        _validator = validator;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Podcast>>> Get()
     {
-        var podcasts = await _context.Podcasts.ToListAsync();
+        var podcasts = await _podcastService.GetAllPodcastsAsync();
         return Ok(podcasts);
     }
     
     [HttpGet(template:"{id}")]
     public async Task<ActionResult<Podcast>> Get(int id)
     {
-        var podcast = await _context.Podcasts.FindAsync(id);
+        var podcast = await _podcastService.GetPodcastByIdAsync(id);
         
         if (podcast == null)
         {
-            return NotFound($"Podcast with id {id} not found");
+            return NotFound($"Podcast с id {id} не найден");
         }
         
         return Ok(podcast);
@@ -39,18 +41,14 @@ public class PodcastControllers: ControllerBase
     [HttpPost]
     public async Task<ActionResult<Podcast>> Post([FromBody] Podcast podcast)
     {
-        if (!ModelState.IsValid)
+        var validationResult = await _validator.ValidateAsync(podcast);
+        if (!validationResult.IsValid)
         {
-            return BadRequest(ModelState);
+            return BadRequest(validationResult.Errors);
         }
 
-        podcast.CreatedAt = DateTime.UtcNow;
-        podcast.UpdatedAt = DateTime.UtcNow;
-
-        _context.Podcasts.Add(podcast);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(Get), new { id = podcast.Id }, podcast);
+        var createdPodcast = await _podcastService.CreatePodcastAsync(podcast);
+        return CreatedAtAction(nameof(Get), new { id = createdPodcast.Id }, createdPodcast);
     }
 
     [HttpPut(template: "{id}")]
@@ -58,46 +56,34 @@ public class PodcastControllers: ControllerBase
     {
         if (id != podcast.Id)
         {
-            return BadRequest("Id mismatch");
+            return BadRequest("ID в URL не совпадает с ID в теле запроса");
         }
 
-        var existingPodcast = await _context.Podcasts.FindAsync(id);
-        if (existingPodcast == null)
+        var validationResult = await _validator.ValidateAsync(podcast);
+        if (!validationResult.IsValid)
         {
-            return NotFound($"Podcast with id {id} not found");
+            return BadRequest(validationResult.Errors);
         }
 
-        existingPodcast.Name = podcast.Name;
-        existingPodcast.Author = podcast.Author;
-        existingPodcast.UpdatedAt = DateTime.UtcNow;
-
-        try
+        var updatedPodcast = await _podcastService.UpdatePodcastAsync(id, podcast);
+        
+        if (updatedPodcast == null)
         {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!await _context.Podcasts.AnyAsync(e => e.Id == id))
-            {
-                return NotFound();
-            }
-            throw;
+            return NotFound($"Подкаст с id {id} не найден");
         }
 
-        return Ok(existingPodcast);
+        return Ok(updatedPodcast);
     }
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(int id)
     {
-        var podcast = await _context.Podcasts.FindAsync(id);
-        if (podcast == null)
+        var deleted = await _podcastService.DeletePodcastAsync(id);
+        
+        if (!deleted)
         {
-            return NotFound($"Podcast with id {id} not found");
+            return NotFound($"Подкаст с id {id} не найден");
         }
-
-        _context.Podcasts.Remove(podcast);
-        await _context.SaveChangesAsync();
 
         return NoContent();
     }

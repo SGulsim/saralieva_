@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: podcast_user
       POSTGRES_PASSWORD: podcast_password
     ports:
-      - '5432:5432'
+      - '5433:5432'
     # сохраняет данные БД на хосте, чтобы они не терялись при пересоздании контейнера
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -26,11 +26,27 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - ./liquibase/changelog:/liquibase/changelog
-      - ./liquibase/liquibase.properties:/liquibase/liquibase.properties
+      - ./liquibase/changelog:/liquibase/changelog:ro
+      - ./liquibase/liquibase.properties:/liquibase/liquibase.properties:ro
     command:
       - --defaults-file=/liquibase/liquibase.properties
       - update
+    restart: on-failure
+
+  redis:
+    image: redis:7-alpine
+    container_name: podcast_redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+  redis_data:
