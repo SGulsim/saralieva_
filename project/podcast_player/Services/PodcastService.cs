@@ -1,4 +1,4 @@
-using Project.models;
+using Project.Models;
 using Project.Repositories.Interfaces;
 using Project.Services.Interfaces;
 

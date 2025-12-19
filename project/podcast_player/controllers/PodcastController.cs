@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using Project.models;
+using Project.Models;
 using Project.Services.Interfaces;
 using FluentValidation;
 
-namespace Project.controllers;
+namespace Project.Controllers;
 
 [ApiController]
 [Route(template:"api/[controller]")]

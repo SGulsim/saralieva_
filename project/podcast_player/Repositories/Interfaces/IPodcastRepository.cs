@@ -1,4 +1,4 @@
-using Project.models;
+using Project.Models;
 
 namespace Project.Repositories.Interfaces;
 

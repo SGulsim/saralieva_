@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Project.Repositories.Interfaces;
-using Project.data;
+using Project.Data;
 
 namespace Project.Repositories;
 

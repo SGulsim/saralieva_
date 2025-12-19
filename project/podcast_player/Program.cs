@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Project.data;
+using Project.Data;
 using Project.Repositories;
 using Project.Repositories.Interfaces;
 using Project.Services;
@@ -48,6 +48,7 @@ builder.Services.AddScoped<IPodcastRepository, PodcastRepository>();
 
 // Регистрация сервисов
 builder.Services.AddScoped<IPodcastService, PodcastService>();
+// builder.Services.AddScoped<IPodcastService, PodcastService>();
 
 // Настройка FluentValidation
 builder.Services.AddValidatorsFromAssemblyContaining<PodcastValidator>();

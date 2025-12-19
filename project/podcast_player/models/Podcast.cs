@@ -1,4 +1,4 @@
-namespace Project.models;
+namespace Project.Models;
 
 public class Podcast
 {
