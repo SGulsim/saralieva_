@@ -1,0 +1,52 @@
+services:
+  postgres:
+    # запуск контейнера
+    image: postgres:16-alpine
+    container_name: podcast_postgres
+    # бд
+    environment:
+      POSTGRES_DB: podcastdb
+      POSTGRES_USER: podcast_user
+      POSTGRES_PASSWORD: podcast_password
+    ports:
+      - '5433:5432'
+    # сохраняет данные БД на хосте, чтобы они не терялись при пересоздании контейнера
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U podcast_user -d podcastdb']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  liquibase:
+    image: liquibase/liquibase:4.27
+    container_name: podcast_liquibase
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./liquibase/changelog:/liquibase/changelog:ro
+      - ./liquibase/liquibase.properties:/liquibase/liquibase.properties:ro
+    command:
+      - --defaults-file=/liquibase/liquibase.properties
+      - update
+    restart: on-failure
+
+  redis:
+    image: redis:7-alpine
+    container_name: podcast_redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
