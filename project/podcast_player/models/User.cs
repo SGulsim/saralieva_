@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Project.Models;
+
 public class User
 {
     [Key]
@@ -24,4 +25,8 @@ public class User
 
     [Column("DefaultPlaybackSpeed")]
     public double DefaultPlaybackSpeed { get; set; } = 1.0;
+
+    [Required]
+    [Column("Role")]
+    public Role Role { get; set; } = Role.User;
 }
