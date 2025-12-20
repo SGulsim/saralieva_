@@ -17,12 +17,19 @@ public class Repository<T> : IRepository<T> where T : class
 
     public virtual async Task<T?> GetByIdAsync(int id)
     {
-        return await _dbSet.FindAsync(id);
+        var entity = await _dbSet.FindAsync(id);
+        if (entity != null)
+        {
+            _context.Entry(entity).State = EntityState.Detached;
+        }
+        return entity;
     }
 
     public virtual async Task<IEnumerable<T>> GetAllAsync()
     {
-        return await _dbSet.ToListAsync();
+        return await _dbSet
+            .AsNoTracking()
+            .ToListAsync();
     }
 
     public virtual async Task<T> AddAsync(T entity)
@@ -41,7 +48,7 @@ public class Repository<T> : IRepository<T> where T : class
 
     public virtual async Task<bool> DeleteAsync(int id)
     {
-        var entity = await GetByIdAsync(id);
+        var entity = await _dbSet.FindAsync(id);
         if (entity == null)
         {
             return false;

@@ -1,24 +1,31 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Project.Models;
 using Project.Services.Interfaces;
 using FluentValidation;
+using Project.Constants;
+using Project.Authorization;
 
 namespace Project.Controllers;
 
 [ApiController]
 [Route(template:"api/[controller]")]
+[Authorize]
 public class PodcastController: ControllerBase
 {
     private readonly IPodcastService _podcastService;
+    private readonly IEpisodeService _episodeService;
     private readonly IValidator<Podcast> _validator;
 
-    public PodcastController(IPodcastService podcastService, IValidator<Podcast> validator)
+    public PodcastController(IPodcastService podcastService, IEpisodeService episodeService, IValidator<Podcast> validator)
     {
         _podcastService = podcastService;
+        _episodeService = episodeService;
         _validator = validator;
     }
 
     [HttpGet]
+    [Authorize(Policy = Permissions.ReadPodcasts)]
     public async Task<ActionResult<IEnumerable<Podcast>>> Get()
     {
         var podcasts = await _podcastService.GetAllPodcastsAsync();
@@ -26,19 +33,35 @@ public class PodcastController: ControllerBase
     }
     
     [HttpGet(template:"{id}")]
+    [Authorize(Policy = Permissions.ReadPodcasts)]
     public async Task<ActionResult<Podcast>> Get(int id)
     {
         var podcast = await _podcastService.GetPodcastByIdAsync(id);
         
         if (podcast == null)
         {
-            return NotFound($"Podcast с id {id} не найден");
+            return NotFound(string.Format(ErrorMessages.Podcast.NotFoundById, id));
         }
         
         return Ok(podcast);
     }
 
+    [HttpGet("{id}/episodes")]
+    [Authorize(Policy = Permissions.ReadEpisodes)]
+    public async Task<ActionResult<IEnumerable<Episode>>> GetEpisodes(int id)
+    {
+        var podcast = await _podcastService.GetPodcastByIdAsync(id);
+        if (podcast == null)
+        {
+            return NotFound(string.Format(ErrorMessages.Podcast.NotFoundByIdRu, id));
+        }
+
+        var episodes = await _episodeService.GetByPodcastIdAsync(id);
+        return Ok(episodes);
+    }
+
     [HttpPost]
+    [Authorize(Policy = Permissions.CreatePodcasts)]
     public async Task<ActionResult<Podcast>> Post([FromBody] Podcast podcast)
     {
         var validationResult = await _validator.ValidateAsync(podcast);
@@ -52,11 +75,12 @@ public class PodcastController: ControllerBase
     }
 
     [HttpPut(template: "{id}")]
+    [Authorize(Policy = Permissions.UpdatePodcasts)]
     public async Task<ActionResult<Podcast>> Put(int id, [FromBody] Podcast podcast)
     {
         if (id != podcast.Id)
         {
-            return BadRequest("ID в URL не совпадает с ID в теле запроса");
+            return BadRequest(ErrorMessages.Validation.IdMismatch);
         }
 
         var validationResult = await _validator.ValidateAsync(podcast);
@@ -69,20 +93,21 @@ public class PodcastController: ControllerBase
         
         if (updatedPodcast == null)
         {
-            return NotFound($"Подкаст с id {id} не найден");
+            return NotFound(string.Format(ErrorMessages.Podcast.NotFoundByIdRu, id));
         }
 
         return Ok(updatedPodcast);
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Policy = Permissions.DeletePodcasts)]
     public async Task<ActionResult> Delete(int id)
     {
         var deleted = await _podcastService.DeletePodcastAsync(id);
         
         if (!deleted)
         {
-            return NotFound($"Подкаст с id {id} не найден");
+            return NotFound(string.Format(ErrorMessages.Podcast.NotFoundByIdRu, id));
         }
 
         return NoContent();

@@ -14,6 +14,7 @@ public class PodcastRepository : Repository<Podcast>, IPodcastRepository
     public async Task<IEnumerable<Podcast>> GetByNameAsync(string name)
     {
         return await _dbSet
+            .AsNoTracking()
             .Where(p => p.Name.Contains(name))
             .ToListAsync();
     }
@@ -21,7 +22,8 @@ public class PodcastRepository : Repository<Podcast>, IPodcastRepository
     public async Task<IEnumerable<Podcast>> GetByAuthorAsync(string author)
     {
         return await _dbSet
-            .Where(p => p.Author.Contains(author))
+            .AsNoTracking()
+            .Where(p => p.Name.Contains(author))
             .ToListAsync();
     }
 }

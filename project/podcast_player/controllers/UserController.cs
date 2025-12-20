@@ -1,12 +1,16 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Project.Models;
 using Project.Services.Interfaces;
 using FluentValidation;
+using Project.Constants;
+using Project.Authorization;
 
 namespace Project.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -19,6 +23,7 @@ public class UserController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = Permissions.ReadUsers)]
     public async Task<ActionResult<IEnumerable<User>>> Get()
     {
         var users = await _userService.GetAllAsync();
@@ -26,19 +31,21 @@ public class UserController : ControllerBase
     }
     
     [HttpGet("{id}")]
+    [Authorize(Policy = Permissions.ReadUsers)]
     public async Task<ActionResult<User>> Get(int id)
     {
         var user = await _userService.GetByIdAsync(id);
         
         if (user == null)
         {
-            return NotFound($"Пользователь с id {id} не найден");
+            return NotFound(string.Format(ErrorMessages.User.NotFoundById, id));
         }
         
         return Ok(user);
     }
 
     [HttpPost]
+    [Authorize(Policy = Permissions.CreateUsers)]
     public async Task<ActionResult<User>> Post([FromBody] User user)
     {
         var validationResult = await _validator.ValidateAsync(user);
@@ -54,11 +61,12 @@ public class UserController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Policy = Permissions.UpdateUsers)]
     public async Task<ActionResult<User>> Put(int id, [FromBody] User user)
     {
         if (id != user.Id)
         {
-            return BadRequest("ID в URL не совпадает с ID в теле запроса");
+            return BadRequest(ErrorMessages.Validation.IdMismatch);
         }
 
         var validationResult = await _validator.ValidateAsync(user);
@@ -71,20 +79,21 @@ public class UserController : ControllerBase
         
         if (updatedUser == null)
         {
-            return NotFound($"Пользователь с id {id} не найден");
+            return NotFound(string.Format(ErrorMessages.User.NotFoundById, id));
         }
 
         return Ok(updatedUser);
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Policy = Permissions.DeleteUsers)]
     public async Task<ActionResult> Delete(int id)
     {
         var deleted = await _userService.DeleteAsync(id);
         
         if (!deleted)
         {
-            return NotFound($"Пользователь с id {id} не найден");
+            return NotFound(string.Format(ErrorMessages.User.NotFoundById, id));
         }
 
         return NoContent();

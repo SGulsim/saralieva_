@@ -9,5 +9,7 @@ public interface IPodcastService
     Task<Podcast> CreatePodcastAsync(Podcast podcast);
     Task<Podcast?> UpdatePodcastAsync(int id, Podcast podcast);
     Task<bool> DeletePodcastAsync(int id);
+    Task<IEnumerable<Podcast>> SearchByNameAsync(string name);
+    Task<IEnumerable<Podcast>> GetRecommendedPodcastsAsync(int count = 10);
 }
 
